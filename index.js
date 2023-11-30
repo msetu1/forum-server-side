@@ -30,15 +30,57 @@ async function run() {
     // my important collection 
 const allPostsCollection=client.db('forumDb').collection('posts')
 const usersCollection=client.db('forumDb').collection('users')
+const announcementsCollection=client.db('forumDb').collection('announcements')
+
+// announcements 
+app.post('/announcements',async(req,res)=>{
+  const result =await announcementsCollection.insertOne(req.body)
+  res.send(result)
+  console.log(result);
+})
+app.get('/announcements',async(req,res)=>{
+  const result =await announcementsCollection.find().toArray()
+res.send(result)
+console.log(result);
+})
+app.get('/users/:email',async (req, res) => {
+  const email = req.params.email;
+  const query = { email: email };
+  const user = await usersCollection.findOne(query)
+  let admin = false;
+  if (user) {
+    admin = user?.role === 'admin';
+  }
+
+  res.send({ admin })
+  console.log(admin);
+  console.log(user);
+});
+
 
 // users
 app.post('/users',async(req,res)=>{
   const result =await usersCollection.insertOne(req.body)
   res.send(result)
+  console.log(result);
 })
 app.get('/users',async(req,res)=>{
   const result =await usersCollection.find().toArray()
 res.send(result)
+console.log(result);
+})
+
+// admin 
+app.patch('/users/:id',async(req,res)=>{
+  const id=req.params.id
+  const query={_id:new ObjectId(id)}
+  const updateDoc={
+    $set:{
+      role:'admin',
+    }
+  }
+  const result=await usersCollection.updateOne(query,updateDoc)
+  res.send(result);
 })
 
 // add post 
