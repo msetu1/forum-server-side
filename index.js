@@ -53,7 +53,6 @@ app.get('/posts/:email', async (req, res) => {
     const filter={authorEmail:email}
     const result = await allPostsCollection.find(filter).toArray();
     res.send(result);
-    // console.log(result);
 
 } catch (error) {
     console.error('Error getting posts data:', error);
@@ -67,7 +66,6 @@ app.get('/posts/:email', async (req, res) => {
       try {
         const user = req.body;
         const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
-        // res.status(200).json(token);
         res.send({ token })
       } catch (error) {
         console.error('Error jwt token create :', error);
