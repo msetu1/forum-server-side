@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
+const jwt = require('jsonwebtoken');
 const app = express();
 const port =process.env.PORT||5000;
 
@@ -32,6 +33,47 @@ const allPostsCollection=client.db('forumDb').collection('posts')
 const usersCollection=client.db('forumDb').collection('users')
 const announcementsCollection=client.db('forumDb').collection('announcements')
 
+// my post deleted 
+app.delete('/posts/:id',async(req, res) => {
+  try{
+    const id = req.params.id;
+    const query = {_id:new ObjectId(id)}
+    const deletePost = await allPostsCollection.deleteOne(query);
+    res.send(deletePost);
+  } catch (error) {
+      console.error('Error delete post data:', error);
+      res.status(500).json({ message: 'Internal server error' });
+  }})
+  
+// my post 
+app.get('/posts/:email', async (req, res) => {
+  try{
+    const email = req.params.email;
+    console.log(email);
+    const filter={authorEmail:email}
+    const result = await allPostsCollection.find(filter).toArray();
+    res.send(result);
+    // console.log(result);
+
+} catch (error) {
+    console.error('Error getting posts data:', error);
+    res.status(500).json({ message: 'Internal server error' });
+} 
+})
+
+
+    //jwt related api
+     app.post('/jwt', async (req, res) => {
+      try {
+        const user = req.body;
+        const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+        // res.status(200).json(token);
+        res.send({ token })
+      } catch (error) {
+        console.error('Error jwt token create :', error);
+        res.status(500).json({ message: 'Internal server error' });
+      }
+    });
 // announcements 
 app.post('/announcements',async(req,res)=>{
   const result =await announcementsCollection.insertOne(req.body)
@@ -57,6 +99,12 @@ app.get('/users/:email',async (req, res) => {
   console.log(user);
 });
 
+app.post('/jwt', async (req, res) => {
+  const user = req.body;
+  console.log(user);
+  const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '2h' });
+  res.send({ token });
+})
 
 // users
 app.post('/users',async(req,res)=>{
@@ -93,23 +141,23 @@ app.post('/posts',async(req,res)=>{
     res.send(result)
 })
 
-// app.patch('/posts/update/:id',async(req,res)=>{
-//   const votes=req.body;
-//   console.log(votes);
-//   const id=req.params.id;
-//   console.log(id);
-//   const filter={_id:new ObjectId(id)};
-//   const updateDoc={
-//     $set:{
-//       upVote:votes.upVote,
-//       downVote:votes.downVote
-//     }
+app.patch('/posts/:id',async(req,res)=>{
+  const votes=req.body;
+  const id=req.params.id;
+  console.log(id);
+  const filter={_id:new ObjectId(id)};
+  const updateDoc={
+    $set:{
+      upVote:votes.upVote,
+      downVote:votes.downVote
+    }
 
-//   }
-//   const result=await allPostsCollection.updateOne(filter, updateDoc)
+  }
+  const result=await allPostsCollection.updateOne(filter, updateDoc)
   
-//   res.send(result);
-// })
+  res.send(result);
+  // console.log(result);
+})
 
 
     // Send a ping to confirm a successful connection
